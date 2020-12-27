@@ -1,0 +1,4 @@
+.idea
+play.py
+*__pycache__/
+data
