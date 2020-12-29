@@ -8,7 +8,7 @@ from sklearn.preprocessing import MinMaxScaler
 from config import Config
 import glob
 
-season = "2018-19"
+season = "2020-21"
 
 n_players = len(os.listdir(f"data/{season}/players/"))
 n_gws = len(os.listdir(f"data/{season}/gws/"))   # TODO check
@@ -53,6 +53,10 @@ X_train, X_test, y_train, y_test = train_test_split(all_player_features, all_pla
 X_train, X_valid, y_train, y_valid = train_test_split(X_train, y_train, test_size=0.2)
 
 scaler = MinMaxScaler()
+# num_instances, num_time_steps, num_features = X_train.shape
+# train_data = np.reshape(X_train, shape=(-1, num_features))
+# train_data = scaler.fit_transform(train_data)
+
 _X_train = X_train.reshape((len(X_train) * n_gws, dimensionality))
 _X_valid = X_valid.reshape((len(X_valid) * n_gws, dimensionality))
 _X_test = X_test.reshape((len(X_test) * n_gws, dimensionality))
@@ -64,27 +68,28 @@ normalized_X_train = normalized_X_train.reshape((len(X_train), n_gws, dimensiona
 normalized_X_valid = normalized_X_valid.reshape((len(X_valid), n_gws, dimensionality))
 normalized_X_test = normalized_X_test.reshape((len(X_test), n_gws, dimensionality))
 
-inversed = scaler.inverse_transform(normalized_X_train)
-inversed = inversed.reshape((len(X_train), n_gws, dimensionality))
+# inversed = scaler.inverse_transform(normalized_X_train)
+# inversed = inversed.reshape((len(X_train), n_gws, dimensionality))
 
 y_pred = X_valid[:, :, -1]
 print(f"Last Value MSE: {np.mean(keras.losses.mean_squared_error(y_valid, y_pred))}")
 
-model_dense = keras.models.Sequential([
-    keras.layers.Flatten(input_shape=[n_gws * dimensionality, 1]),
-    keras.layers.Dense(1,activation='relu')
-])
 
+model_dense = keras.models.Sequential([
+    keras.layers.Dense(10, activation='relu', input_shape = (None, dimensionality)),
+    # keras.layers.Flatten(input_shape=[n_gws * dimensionality, 1]),
+    keras.layers.Dense(1, activation='relu')
+])
 model_dense.compile(loss="mean_squared_error",
                     # optimizer=keras.optimizers.SGD(learning_rate=0.01),
                     metrics=["accuracy"])
 
-model_dense.fit(normalized_X_train, y_train, epochs=100, validation_data=(normalized_X_valid, y_valid))
-y_pred_dense = model_dense.predict(normalized_X_test).astype(int)
-print(f"Dense NN MSE: {np.mean(keras.losses.mean_squared_error(y_valid[:, np.newaxis, :], y_pred_dense))}")
+model_dense.fit(normalized_X_train, y_train, epochs=10, validation_data=(normalized_X_valid, y_valid))
+y_pred_dense = model_dense.predict(normalized_X_valid)
+print(f"Dense NN MSE: {np.mean(keras.losses.mean_squared_error(y_valid[:, :, np.newaxis], y_pred_dense))}")
 
 model_rnn = keras.models.Sequential([
-    keras.layers.SimpleRNN(10, return_sequences=True, input_shape=[n_gws, dimensionality]),
+    keras.layers.SimpleRNN(10, return_sequences=True, input_shape=[None, dimensionality]),
     # keras.layers.SimpleRNN(50),
     keras.layers.Dense(1)
 ])
@@ -93,19 +98,20 @@ model_rnn.compile(loss="mean_squared_error",
                   # optimizer=keras.optimizers.SGD(learning_rate=0.01),
                   metrics=["accuracy"])
 
-model_rnn.fit(normalized_X_train, y_train, epochs=10, validation_data=(normalized_X_valid, y_valid))
+model_rnn.fit(normalized_X_train, y_train, epochs=100, validation_data=(normalized_X_valid, y_valid))
 y_pred_rnn = model_rnn.predict(normalized_X_valid).astype(int)
 print(f"RNN MSE: {np.mean(keras.losses.mean_squared_error(y_valid[:, :, np.newaxis], y_pred_rnn))}")
 
-n_plots = 5
+n_plots = 10
 fig, axs = plt.subplots(n_plots)
 for i in range(n_plots):
-    x = X_valid[i]
-    axs[i].plot(np.append(x, y_valid[i, :n_plots]))
-    axs[i].plot(len(x), y_valid[i, :n_plots], "ro")
-    axs[i].plot(len(x), y_pred[i, :n_plots], "gx")
-    axs[i].plot(len(x), y_pred_dense[i, :n_plots], "kx")
-    axs[i].plot(len(x), y_pred_rnn[i, :n_plots], "bx")
+    x = y_valid[i]
+    axs[i].plot(x)
+    axs[i].plot(np.append(x, y_valid[i, -1:]))
+    axs[i].plot(len(x), y_valid[i, -1:], "rx")
+    # axs[i].plot(len(x), y_pred[i, :n_plots], "gx")
+    axs[i].plot(len(x), y_pred_dense[i, -1:], "kx")
+    axs[i].plot(len(x), y_pred_rnn[i, -1:], "bx")
 
 plt.show()
 
