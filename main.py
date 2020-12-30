@@ -8,13 +8,11 @@ from sklearn.preprocessing import MinMaxScaler
 from config import Config
 import glob
 
-season = "2020-21"
+season = "2017-18"
 
 n_players = len(os.listdir(f"data/{season}/players/"))
-n_gws = len(os.listdir(f"data/{season}/gws/"))   # TODO check
-
-
-
+n_gws = len(os.listdir(f"data/{season}/gws/")) - 1  # TODO check
+n_gws=5
 features = ['selected', "minutes", 'goals_conceded', 'goals_scored', 'threat', 'creativity', 'influence', 'assists', "total_points"]
 dimensionality = len(features)
 
@@ -28,14 +26,13 @@ for i, player_name in enumerate(os.listdir(f"data/{season}/players/")):
 
     target_points = np.zeros(n_gws)
     gw_features = np.zeros((n_gws, dimensionality))
-    player_data = pd.read_csv(f"data/{season}/players/{player_name}/gw.csv")
+    player_data = pd.read_csv(f"data/{season}/players/{player_name}/gw.csv")[5:10]
     player_data["points_gw_t+1"] = player_data['total_points'].shift(-1)
     player_data.drop(player_data.tail(1).index, inplace=True)  # dropping last row as nothing to predict on
 
     player_features = player_data[features]
     if player_features.empty:
         continue
-
 
     target_points[-len(player_data):] = player_data['points_gw_t+1']
     gw_features[-len(player_data):] = player_features.values
@@ -89,7 +86,7 @@ y_pred_dense = model_dense.predict(normalized_X_valid)
 print(f"Dense NN MSE: {np.mean(keras.losses.mean_squared_error(y_valid[:, :, np.newaxis], y_pred_dense))}")
 
 model_rnn = keras.models.Sequential([
-    keras.layers.SimpleRNN(10, return_sequences=True, input_shape=[None, dimensionality]),
+    keras.layers.SimpleRNN(20, return_sequences=True, input_shape=[None, dimensionality]),
     # keras.layers.SimpleRNN(50),
     keras.layers.Dense(1)
 ])
@@ -100,18 +97,19 @@ model_rnn.compile(loss="mean_squared_error",
 
 model_rnn.fit(normalized_X_train, y_train, epochs=100, validation_data=(normalized_X_valid, y_valid))
 y_pred_rnn = model_rnn.predict(normalized_X_valid).astype(int)
+# y_pred_rnn = model_rnn.predict(normalized_X_valid[:, :-1, :]).astype(int)
 print(f"RNN MSE: {np.mean(keras.losses.mean_squared_error(y_valid[:, :, np.newaxis], y_pred_rnn))}")
 
-n_plots = 10
+n_plots = 5
 fig, axs = plt.subplots(n_plots)
 for i in range(n_plots):
     x = y_valid[i]
     axs[i].plot(x)
-    axs[i].plot(np.append(x, y_valid[i, -1:]))
-    axs[i].plot(len(x), y_valid[i, -1:], "rx")
+    # axs[i].plot(np.append(x, y_valid[i, -1:]))
+    axs[i].plot(len(x) - 1, y_pred[i, -1:], "rx")
     # axs[i].plot(len(x), y_pred[i, :n_plots], "gx")
-    axs[i].plot(len(x), y_pred_dense[i, -1:], "kx")
-    axs[i].plot(len(x), y_pred_rnn[i, -1:], "bx")
+    axs[i].plot(len(x) - 1, y_pred_dense[i, -1:], "kx")
+    axs[i].plot(len(x) - 1, y_pred_rnn[i, -1:], "bx")
 
 plt.show()
 
