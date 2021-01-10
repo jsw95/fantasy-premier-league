@@ -9,3 +9,9 @@ services:
       - POSTGRES_DB=postgres
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
+    volumes:
+      - fpl:/var/lib/docker/volumes/fpl-postgres
+
+volumes:
+  fpl:
+
