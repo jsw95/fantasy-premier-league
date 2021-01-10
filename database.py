@@ -8,6 +8,8 @@ conn = psycopg2.connect(database="postgres", user="postgres", password="postgres
 cursor = conn.cursor()
 
 
+a = cursor.execute("select * from get_player_data('Jamie_Vardy')")
+
 
 def insert_players_into_db():
     players = {}
@@ -74,7 +76,7 @@ def insert_player_gameweek_data():
         insert_query = insert_query[:-1]
         cursor.execute(insert_query)
 
-insert_player_gameweek_data()
+# insert_player_gameweek_data()
 
 
 
