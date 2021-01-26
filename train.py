@@ -6,6 +6,8 @@ from sklearn.model_selection import train_test_split
 import keras
 from sklearn.preprocessing import MinMaxScaler
 from config import Config
+import joblib
+
 import glob
 
 """
@@ -17,7 +19,7 @@ season = "2017-18"
 
 n_players = len(os.listdir(f"data/{season}/players/"))
 n_gws = len(os.listdir(f"data/{season}/gws/")) - 1  # TODO check
-n_gws=5
+n_gws = 5
 features = ['selected', "minutes", 'goals_conceded', 'goals_scored', 'threat', 'creativity', 'influence', 'assists', "total_points"]
 dimensionality = len(features)
 
@@ -69,6 +71,9 @@ normalized_X_test = scaler.transform(_X_test)
 normalized_X_train = normalized_X_train.reshape((len(X_train), n_gws, dimensionality))
 normalized_X_valid = normalized_X_valid.reshape((len(X_valid), n_gws, dimensionality))
 normalized_X_test = normalized_X_test.reshape((len(X_test), n_gws, dimensionality))
+
+scaler_filename = "models/scalers/scaler_26_jan.gz"
+joblib.dump(scaler, scaler_filename)
 
 # inversed = scaler.inverse_transform(normalized_X_train)
 # inversed = inversed.reshape((len(X_train), n_gws, dimensionality))
