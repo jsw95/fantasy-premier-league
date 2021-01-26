@@ -8,8 +8,21 @@ conn = psycopg2.connect(database="postgres", user="postgres", password="postgres
 cursor = conn.cursor()
 
 
-a = cursor.execute("select * from get_player_data('Jamie_Vardy')")
 
+def result_set_to_dict(cursor):
+    result_list = []
+    col_names = [col.name for col in cursor.description]
+    for week in cursor.fetchall():
+        res = {col_names[i]: val for i, val in enumerate(week)}
+        result_list.append(res)
+
+    return result_list
+
+
+cursor.execute("select * from get_player_data('Jamie_Vardy')")
+
+r = result_set_to_dict(cursor)
+print(r)
 
 def insert_players_into_db():
     players = {}

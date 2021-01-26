@@ -8,6 +8,11 @@ from sklearn.preprocessing import MinMaxScaler
 from config import Config
 import glob
 
+"""
+Messy script used to train NN on past gameweek data
+"""
+
+
 season = "2017-18"
 
 n_players = len(os.listdir(f"data/{season}/players/"))
@@ -100,18 +105,22 @@ y_pred_rnn = model_rnn.predict(normalized_X_valid).astype(int)
 # y_pred_rnn = model_rnn.predict(normalized_X_valid[:, :-1, :]).astype(int)
 print(f"RNN MSE: {np.mean(keras.losses.mean_squared_error(y_valid[:, :, np.newaxis], y_pred_rnn))}")
 
-n_plots = 5
-fig, axs = plt.subplots(n_plots)
-for i in range(n_plots):
-    x = y_valid[i]
-    axs[i].plot(x)
-    # axs[i].plot(np.append(x, y_valid[i, -1:]))
-    axs[i].plot(len(x) - 1, y_pred[i, -1:], "rx")
-    # axs[i].plot(len(x), y_pred[i, :n_plots], "gx")
-    axs[i].plot(len(x) - 1, y_pred_dense[i, -1:], "kx")
-    axs[i].plot(len(x) - 1, y_pred_rnn[i, -1:], "bx")
 
-plt.show()
+model_rnn.save("models/rnn_jan_26")
+
+#
+# n_plots = 5
+# fig, axs = plt.subplots(n_plots)
+# for i in range(n_plots):
+#     x = y_valid[i]
+#     axs[i].plot(x)
+#     # axs[i].plot(np.append(x, y_valid[i, -1:]))
+#     axs[i].plot(len(x) - 1, y_pred[i, -1:], "rx")
+#     # axs[i].plot(len(x), y_pred[i, :n_plots], "gx")
+#     axs[i].plot(len(x) - 1, y_pred_dense[i, -1:], "kx")
+#     axs[i].plot(len(x) - 1, y_pred_rnn[i, -1:], "bx")
+#
+# plt.show()
 
 #
 # for i in all_player_data:
