@@ -6,20 +6,15 @@ from sklearn.model_selection import train_test_split
 import keras
 from sklearn.preprocessing import MinMaxScaler
 from config import Config
-import joblib
-
 import glob
 
-"""
-Messy script used to train NN on past gameweek data
-"""
-
-
-season = "2017-18"
+season = "2019-20"
 
 n_players = len(os.listdir(f"data/{season}/players/"))
-n_gws = len(os.listdir(f"data/{season}/gws/")) - 1  # TODO check
-n_gws = 5
+n_gws = len(os.listdir(f"data/{season}/gws/"))   # TODO check
+
+
+
 features = ['selected', "minutes", 'goals_conceded', 'goals_scored', 'threat', 'creativity', 'influence', 'assists', "total_points"]
 dimensionality = len(features)
 
@@ -33,13 +28,14 @@ for i, player_name in enumerate(os.listdir(f"data/{season}/players/")):
 
     target_points = np.zeros(n_gws)
     gw_features = np.zeros((n_gws, dimensionality))
-    player_data = pd.read_csv(f"data/{season}/players/{player_name}/gw.csv")[5:10]
+    player_data = pd.read_csv(f"data/{season}/players/{player_name}/gw.csv")
     player_data["points_gw_t+1"] = player_data['total_points'].shift(-1)
     player_data.drop(player_data.tail(1).index, inplace=True)  # dropping last row as nothing to predict on
 
     player_features = player_data[features]
     if player_features.empty:
         continue
+
 
     target_points[-len(player_data):] = player_data['points_gw_t+1']
     gw_features[-len(player_data):] = player_features.values
@@ -72,9 +68,6 @@ normalized_X_train = normalized_X_train.reshape((len(X_train), n_gws, dimensiona
 normalized_X_valid = normalized_X_valid.reshape((len(X_valid), n_gws, dimensionality))
 normalized_X_test = normalized_X_test.reshape((len(X_test), n_gws, dimensionality))
 
-scaler_filename = "models/scalers/scaler_26_jan.gz"
-joblib.dump(scaler, scaler_filename)
-
 # inversed = scaler.inverse_transform(normalized_X_train)
 # inversed = inversed.reshape((len(X_train), n_gws, dimensionality))
 
@@ -96,7 +89,7 @@ y_pred_dense = model_dense.predict(normalized_X_valid)
 print(f"Dense NN MSE: {np.mean(keras.losses.mean_squared_error(y_valid[:, :, np.newaxis], y_pred_dense))}")
 
 model_rnn = keras.models.Sequential([
-    keras.layers.SimpleRNN(20, return_sequences=True, input_shape=[None, dimensionality]),
+    keras.layers.SimpleRNN(10, return_sequences=True, input_shape=[None, dimensionality]),
     # keras.layers.SimpleRNN(50),
     keras.layers.Dense(1)
 ])
@@ -107,7 +100,6 @@ model_rnn.compile(loss="mean_squared_error",
 
 model_rnn.fit(normalized_X_train, y_train, epochs=100, validation_data=(normalized_X_valid, y_valid))
 y_pred_rnn = model_rnn.predict(normalized_X_valid).astype(int)
-# y_pred_rnn = model_rnn.predict(normalized_X_valid[:, :-1, :]).astype(int)
 print(f"RNN MSE: {np.mean(keras.losses.mean_squared_error(y_valid[:, :, np.newaxis], y_pred_rnn))}")
 
 
