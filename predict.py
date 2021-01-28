@@ -49,9 +49,6 @@ def predict_all_players():
         else:
             next_gameweek_preds[week['index_name']] = [pred]
 
-    print(next_gameweek_preds['Jamie_Vardy'])
-    print(next_gameweek_preds['Mohamed_Salah'])
-
     ranked_predictions = []
     for player, preds in next_gameweek_preds.items():
         ranked_predictions.append((player, preds[-1]))
@@ -59,8 +56,6 @@ def predict_all_players():
     ranked_predictions = sorted(ranked_predictions, key=lambda x: x[1], reverse=True)
 
     return ranked_predictions
-
-
 
 
 def player_data_to_array(player_data):
@@ -80,7 +75,7 @@ def scale_features(feats):
 
 
 # player_prediction = predict_one_player("Jordan_Henderson")
-#
+
 # print(f"Luke_Shaw points: {predict_one_player('Luke_Shaw')}")
 # print(f"Mohamed_Salah points: {predict_one_player('Mohamed_Salah')}")
 # print(f"John_Stones points: {predict_one_player('John_Stones')}")
