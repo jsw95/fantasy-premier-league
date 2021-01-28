@@ -11,13 +11,10 @@ import glob
 season = "2019-20"
 
 n_players = len(os.listdir(f"data/{season}/players/"))
-n_gws = len(os.listdir(f"data/{season}/gws/"))   # TODO check
+n_gws = len(os.listdir(f"data/{season}/gws/"))  # TODO check
 
-
-
-features = ['selected', "minutes", 'goals_conceded', 'goals_scored', 'threat', 'creativity', 'influence', 'assists', "total_points"]
+features = Config.FEATURE_COLUMNS
 dimensionality = len(features)
-
 
 # join player years, pad missing time with zeros
 
@@ -36,26 +33,15 @@ for i, player_name in enumerate(os.listdir(f"data/{season}/players/")):
     if player_features.empty:
         continue
 
-
     target_points[-len(player_data):] = player_data['points_gw_t+1']
     gw_features[-len(player_data):] = player_features.values
     all_player_target_points[i, :] = target_points
     all_player_features[i, :, :] = gw_features
 
-    # print(player_name)
-    # print(gw_points)
-    # print(len(player_data))
-    # print()
-
-
-
 X_train, X_test, y_train, y_test = train_test_split(all_player_features, all_player_target_points, test_size=0.1)
 X_train, X_valid, y_train, y_valid = train_test_split(X_train, y_train, test_size=0.2)
 
 scaler = MinMaxScaler()
-# num_instances, num_time_steps, num_features = X_train.shape
-# train_data = np.reshape(X_train, shape=(-1, num_features))
-# train_data = scaler.fit_transform(train_data)
 
 _X_train = X_train.reshape((len(X_train) * n_gws, dimensionality))
 _X_valid = X_valid.reshape((len(X_valid) * n_gws, dimensionality))
@@ -74,9 +60,8 @@ normalized_X_test = normalized_X_test.reshape((len(X_test), n_gws, dimensionalit
 y_pred = X_valid[:, :, -1]
 print(f"Last Value MSE: {np.mean(keras.losses.mean_squared_error(y_valid, y_pred))}")
 
-
 model_dense = keras.models.Sequential([
-    keras.layers.Dense(10, activation='relu', input_shape = (None, dimensionality)),
+    keras.layers.Dense(10, activation='relu', input_shape=(None, dimensionality)),
     # keras.layers.Flatten(input_shape=[n_gws * dimensionality, 1]),
     keras.layers.Dense(1, activation='relu')
 ])
@@ -101,7 +86,6 @@ model_rnn.compile(loss="mean_squared_error",
 model_rnn.fit(normalized_X_train, y_train, epochs=100, validation_data=(normalized_X_valid, y_valid))
 y_pred_rnn = model_rnn.predict(normalized_X_valid).astype(int)
 print(f"RNN MSE: {np.mean(keras.losses.mean_squared_error(y_valid[:, :, np.newaxis], y_pred_rnn))}")
-
 
 model_rnn.save("models/rnn_jan_26")
 

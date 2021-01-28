@@ -1,5 +1,5 @@
-drop function get_player_data(player_name varchar);
-create or replace function get_player_data(player_name varchar)
+drop function get_all_players_data();
+create or replace function get_all_players_data()
 returns table (
         player_id int,
         index_name varchar,
@@ -24,7 +24,5 @@ begin
         player_gameweek_stats.threat, player_gameweek_stats.creativity, player_gameweek_stats.influence,
         player_gameweek_stats.assists, player_gameweek_stats.total_points
     from players
-    inner join player_gameweek_stats on players.player_id=player_gameweek_stats.player_id
-    where players.index_name=player_name;
+    inner join player_gameweek_stats on players.player_id=player_gameweek_stats.player_id;
 end;$$
-
