@@ -4,5 +4,7 @@
  
  Three parts to service.
  1. RNN (Keras) based ML model to predict next gameweek points for each player
- 2. Optimisation algorithm to handle constraints of budget and injuries
+ 2. Optimisation algorithm to handle constraints of budget and team selection
  3. Automation of team selection and transfers
+
+
